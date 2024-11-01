@@ -1,8 +1,6 @@
 .input-container {
     display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 10px;
+    flex-direction: column;
   }
 
 .styled-input {
@@ -23,3 +21,11 @@
     font-family: 'Jura', sans-serif;
   }
   
+  .input-field-label {
+    width: 100%;
+    font-size: 14px;
+    color: #ffffff;
+    font-family: 'Jura', sans-serif;
+    margin-bottom: 4px;
+    text-align: left;
+  }
