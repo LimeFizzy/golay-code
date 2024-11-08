@@ -1,6 +1,6 @@
 import { G } from './constants';
 import { MessageToEncode } from './types';
-import { bin_add, bin_mult } from './utils';
+import { binarySum, binaryProd } from './utils';
 
 export const encode = (msg: MessageToEncode) => {
     if (msg.length !== 12) {
@@ -12,7 +12,7 @@ export const encode = (msg: MessageToEncode) => {
     
     for (let i = 0; i < 23; i++) {
         for (let j = 0; j < 12; j++) {
-            result[i] = bin_add(result[i], bin_mult(msg[j], G[j][i]));
+            result[i] = binarySum(result[i], binaryProd(msg[j], G[j][i]));
         }
     }
     return result;

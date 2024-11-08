@@ -9,12 +9,14 @@ import { StyledButton } from "./components/button/Button";
 import { useCallback, useState } from "react";
 import { MessageToEncode } from "./services/types";
 import { sendThroughtChannel } from "./services/sendingToChannel";
+import { decode } from "./services/decoding";
 
 function App() {
   const [input, setInput] = useState("");
   const [errorPossibility, setErrorPossibility] = useState("");
   const [encoded, setEncoded] = useState("");
   const [channelMsg, setChannelMsg] = useState("");
+  const [decoded, setDecoded] = useState("");
 
   const handleEncodeClick = useCallback(() => {
     const msg = input.split("").map((c) => Number(c));
@@ -27,6 +29,11 @@ function App() {
     const afterChannel = sendThroughtChannel(msg, Number(errorPossibility));
     setChannelMsg(afterChannel?.join("")!);
   }, [encoded, errorPossibility]);
+
+  const handleDecodeClick = useCallback(() => {
+    const decodedMsg = decode(channelMsg.split("").map((c) => Number(c)));
+    setDecoded(decodedMsg?.join(""));
+  }, []);
 
   const handleInputChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -96,7 +103,7 @@ function App() {
             onChange={handleChanelChange}
           />
           <img src={arrow}></img>
-          <TextField label="Decoded message" text="to be done..." />
+          <TextField label="Decoded message" text={decoded || "..."} />
         </div>
         <div className="buttons-container">
           <StyledButton label="Encode" onClick={handleEncodeClick} />
