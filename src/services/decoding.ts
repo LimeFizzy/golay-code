@@ -10,7 +10,7 @@ const formatInput = (encoded: EncodedMessage) => {
     const formatted: number[] = [];
     encoded.forEach((value, index) => formatted[index] = value);
 
-    formatted[23] = getWeight(formatted) % 2 === 0 ? 0 : 1;
+    formatted[23] = getWeight(formatted) % 2 ? 0 : 1;
 
     return formatted;
 }
@@ -31,7 +31,7 @@ export const getSyndrome = (encoded: any) => {
 export const decode = (encoded: number[]) => {
     const u: number[] = new Array(24).fill(0); // error vector
     let decodable = true;
-    let sB: number[] = new Array(12).fill(0); // Second syndrome vector
+    const sB: number[] = new Array(12).fill(0); // Second syndrome vector
 
     const formatted = formatInput(encoded as EncodedMessage);
     const syndrome = getSyndrome(formatted);
@@ -45,12 +45,13 @@ export const decode = (encoded: number[]) => {
         // Step 3: Check if weight(s + B[i]) <= 2 for any row B[i]
         for (let i = 0; i < 12; i++) {
             const tempSyndrome = syndrome.map((bit, j) => binarySum(bit, B[i][j]));
-
             if (getWeight(tempSyndrome) <= 2) {
                 for (let k = 0; k < 12; k++) {
                     u[k] = tempSyndrome[k];
                 }
-                u[12 + i] = 1; // Set the error vector for the specific error
+                for (let k = 12; k < 24; k++) {
+                    u[k] = (k - 12 === i) ? 1 : 0;
+                }
                 found = true;
                 break;
             }
@@ -76,7 +77,6 @@ export const decode = (encoded: number[]) => {
                 let corrected = false;
                 for (let i = 0; i < 12; i++) {
                     const tempSB = sB.map((bit, j) => binarySum(bit, B[i][j]));
-
                     if (getWeight(tempSB) <= 2) {
                         for (let k = 0; k < 12; k++) {
                             u[k] = (k === i) ? 1 : 0;
@@ -86,7 +86,7 @@ export const decode = (encoded: number[]) => {
                         break;
                     }
                 }
-
+                
                 if (!corrected) {
                     decodable = false;
                 }
