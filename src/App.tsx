@@ -28,12 +28,12 @@ function App() {
     const msg = encoded.split("").map((c) => Number(c));
     const afterChannel = sendThroughtChannel(msg, Number(errorPossibility));
     setChannelMsg(afterChannel?.join("")!);
-  }, [encoded, errorPossibility]);
+  }, [encoded, errorPossibility, setChannelMsg]);
 
   const handleDecodeClick = useCallback(() => {
     const decodedMsg = decode(channelMsg.split("").map((c) => Number(c)));
     setDecoded(decodedMsg?.join(""));
-  }, []);
+  }, [channelMsg, setDecoded]);
 
   const handleInputChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -108,7 +108,7 @@ function App() {
         <div className="buttons-container">
           <StyledButton label="Encode" onClick={handleEncodeClick} />
           <StyledButton label="Send to chanel" onClick={handleSendClick} />
-          <StyledButton label="Decode" />
+          <StyledButton label="Decode" onClick={handleDecodeClick} />
         </div>
       </div>
     </>
