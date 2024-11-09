@@ -84,7 +84,7 @@ function App() {
         <div className="data-container">
           <Dropdown />
           <InputField
-            placeholder="Provide input here..."
+            placeholder="Input 12 bits (0 and 1)..."
             value={input}
             onChange={handleInputChange}
           />
