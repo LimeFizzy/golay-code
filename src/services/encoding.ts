@@ -8,12 +8,8 @@ export const encode = (msg: MessageToEncode) => {
         return;
     }
 
-    const result: number[] = new Array(23).fill(0);
-    
-    for (let i = 0; i < 23; i++) {
-        for (let j = 0; j < 12; j++) {
-            result[i] = binarySum(result[i], binaryProd(msg[j], G[j][i]));
-        }
-    }
-    return result;
+    return Array.from({ length: 23 }, (_, i) =>
+        (msg as number[]).reduce((sum, bit, j) => 
+            binarySum(sum, binaryProd(bit, G[j][i])), 0)
+    );
 }

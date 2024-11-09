@@ -8,7 +8,7 @@ import arrow from "./assets/arrow.svg";
 import { StyledButton } from "./components/button/Button";
 import { useCallback, useState } from "react";
 import { MessageToEncode } from "./services/types";
-import { sendThroughtChannel } from "./services/sendingToChannel";
+import { sendThroughChannel } from "./services/sendingToChannel";
 import { decode } from "./services/decoding";
 
 function App() {
@@ -26,7 +26,7 @@ function App() {
 
   const handleSendClick = useCallback(() => {
     const msg = encoded.split("").map((c) => Number(c));
-    const afterChannel = sendThroughtChannel(msg, Number(errorPossibility));
+    const afterChannel = sendThroughChannel(msg, Number(errorPossibility));
     setChannelMsg(afterChannel?.join("")!);
   }, [encoded, errorPossibility, setChannelMsg]);
 
