@@ -1,18 +1,17 @@
 import { H, B } from "./constants";
-import { EncodedMessage } from "./types";
 import { binarySum, binaryProd } from "./utils";
 
 const getWeight = (msg: number[]) => {
     return msg.reduce((a, b) => a + b, 0);
 }
 
-const formatInput = (encoded: EncodedMessage) => {
+const formatInput = (encoded: number[]) => {
     const formatted = [...encoded];
     formatted[23] = getWeight(formatted) % 2 ? 0 : 1;
     return formatted;
 }
 
-const getSyndrome = (encoded: EncodedMessage): number[] => {
+const getSyndrome = (encoded: number[]): number[] => {
     const formatted: number[] = formatInput(encoded);
     return Array.from({ length: 12 }, (_, i) => 
         formatted.reduce((syndrome, bit, j) => 
@@ -25,7 +24,7 @@ export const decode = (encoded: number[]) => {
     let decodable = true;
 
     // Prepare encoded message for the C24 decoding algorithm
-    const formatted = formatInput(encoded as EncodedMessage);
+    const formatted = formatInput(encoded);
     // Step 1: Compute the syndrome s = wH
     const syndrome = getSyndrome(formatted);
 

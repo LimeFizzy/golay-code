@@ -1,8 +1,7 @@
 import { G } from './constants';
-import { MessageToEncode } from './types';
 import { binarySum, binaryProd } from './utils';
 
-export const encode = (msg: MessageToEncode) => {
+export const encode = (msg: number[]) => {
     if (msg.length !== 12) {
         console.log(`This message can't be encoded.`);
         return;

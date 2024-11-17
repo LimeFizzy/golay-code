@@ -7,11 +7,11 @@ import { TextField } from "./components/text-field/TextField";
 import arrow from "./assets/arrow.svg";
 import { StyledButton } from "./components/button/Button";
 import { useCallback, useState } from "react";
-import { MessageToEncode } from "./services/types";
 import { sendThroughChannel } from "./services/sendingToChannel";
 import { decode } from "./services/decoding";
+// import { golayEncodeDecode } from "./services/text";
 
-function App() {
+const App = () => {
   const [input, setInput] = useState("");
   const [errorPossibility, setErrorPossibility] = useState("");
   const [encoded, setEncoded] = useState("");
@@ -20,7 +20,7 @@ function App() {
 
   const handleEncodeClick = useCallback(() => {
     const msg = input.split("").map((c) => Number(c));
-    const encoded = encode(msg as MessageToEncode);
+    const encoded = encode(msg);
     setEncoded(encoded?.join("")!);
   }, [input, setEncoded]);
 
@@ -77,6 +77,8 @@ function App() {
     [setChannelMsg]
   );
 
+  // golayEncodeDecode("Text decoding and encoding actually works");
+
   return (
     <>
       <Navbar />
@@ -113,6 +115,6 @@ function App() {
       </div>
     </>
   );
-}
+};
 
 export default App;
