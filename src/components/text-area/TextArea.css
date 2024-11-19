@@ -1,0 +1,29 @@
+.text-area-container {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .text-area-label {
+    font-size: 14px;
+    color: #ffffff;
+    font-family: 'Jura', sans-serif;
+    margin-bottom: 4px;
+    text-align: left;
+  }
+  
+  .text-area {
+    background-color: #ffffff;
+    color: #000000;
+    padding: 10px 20px;
+    font-size: 16px;
+    font-family: 'Jura', sans-serif;
+    border-radius: 10px;
+    text-align: left;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+    resize: none;
+    overflow: auto;
+    transition: height 0.2s ease;
+    height: auto;
+    max-height: 200px;
+  }
+  

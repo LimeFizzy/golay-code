@@ -1,57 +1,106 @@
+import React, { useState, useCallback } from "react";
 import "./App.css";
 import { encode } from "./services/encoding";
 import { Navbar } from "./components/navbar/Navbar";
 import { Dropdown } from "./components/dropdown/Dropdown";
 import { InputField } from "./components/input-field/InputField";
 import { TextField } from "./components/text-field/TextField";
+import { TextArea } from "./components/text-area/TextArea";
 import arrow from "./assets/arrow.svg";
 import { StyledButton } from "./components/button/Button";
-import { useCallback, useState } from "react";
 import { sendThroughChannel } from "./services/sendingToChannel";
 import { decode } from "./services/decoding";
-// import { golayEncodeDecode } from "./services/text";
+import { golayEncodeDecode } from "./services/text";
 
-const App = () => {
-  const [input, setInput] = useState("");
-  const [errorPossibility, setErrorPossibility] = useState("");
-  const [encoded, setEncoded] = useState("");
-  const [channelMsg, setChannelMsg] = useState("");
-  const [decoded, setDecoded] = useState("");
+const App: React.FC = () => {
+  const [input, setInput] = useState<string>("");
+  const [errorPossibility, setErrorPossibility] = useState<string>("");
+  const [encoded, setEncoded] = useState<string>("");
+  const [channelMsg, setChannelMsg] = useState<string>("");
+  const [decoded, setDecoded] = useState<string>("");
+  const [inputType, setInputType] = useState<string>("binary");
+
+  const handleDropdownChange = useCallback((value: string) => {
+    setInputType(value);
+    setInput("");
+    setEncoded("");
+    setChannelMsg("");
+    setDecoded("");
+  }, []);
 
   const handleEncodeClick = useCallback(() => {
-    const msg = input.split("").map((c) => Number(c));
-    const encoded = encode(msg);
-    setEncoded(encoded?.join("")!);
-  }, [input, setEncoded]);
+    if (inputType === "binary") {
+      const msg = input.split("").map((c) => Number(c));
+      const encodedBinary = encode(msg);
+      setEncoded(encodedBinary?.join("")!);
+    } else if (inputType === "text") {
+      const encodedText = golayEncodeDecode(
+        input,
+        parseFloat(errorPossibility) || 0
+      );
+      setEncoded(encodedText);
+    }
+  }, [input, inputType, errorPossibility]);
 
   const handleSendClick = useCallback(() => {
-    const msg = encoded.split("").map((c) => Number(c));
-    const afterChannel = sendThroughChannel(msg, Number(errorPossibility));
-    setChannelMsg(afterChannel?.join("")!);
-  }, [encoded, errorPossibility, setChannelMsg]);
+    if (inputType === "binary") {
+      const msg = encoded.split("").map((c) => Number(c));
+      const afterChannel = sendThroughChannel(msg, Number(errorPossibility));
+      setChannelMsg(afterChannel?.join("")!);
+    } else if (inputType === "text") {
+      const transmittedText = golayEncodeDecode(
+        encoded,
+        parseFloat(errorPossibility) || 0
+      );
+      setChannelMsg(transmittedText);
+    }
+  }, [encoded, errorPossibility, inputType]);
 
   const handleDecodeClick = useCallback(() => {
-    const decodedMsg = decode(channelMsg.split("").map((c) => Number(c)));
-    setDecoded(decodedMsg?.join(""));
-  }, [channelMsg, setDecoded]);
+    if (inputType === "binary") {
+      const decodedBinary = decode(channelMsg.split("").map((c) => Number(c)));
+      setDecoded(decodedBinary?.join("")!);
+    } else if (inputType === "text") {
+      const decodedText = golayEncodeDecode(channelMsg, 0); // Decode without additional errors
+      setDecoded(decodedText);
+    }
+  }, [channelMsg, inputType]);
 
   const handleInputChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
+    (e: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) => {
       const { value } = e.target;
 
-      const validBinaryPattern = /^[01]*$/;
-
-      if (value.length <= 12 && validBinaryPattern.test(value)) {
+      if (inputType === "binary") {
+        const validBinaryPattern = /^[01]*$/;
+        if (value.length <= 12 && validBinaryPattern.test(value)) {
+          setInput(value);
+        }
+      } else if (inputType === "text") {
         setInput(value);
       }
     },
-    [setInput]
+    [inputType]
+  );
+
+  const handleChannelChange = useCallback(
+    (e: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) => {
+      const { value } = e.target;
+
+      if (inputType === "binary") {
+        const validBinaryPattern = /^[01]*$/;
+        if (value.length <= 23 && validBinaryPattern.test(value)) {
+          setChannelMsg(value);
+        }
+      } else if (inputType === "text") {
+        setChannelMsg(value);
+      }
+    },
+    [inputType]
   );
 
   const handleErrorPossibilityChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const { value } = e.target;
-
       const validNumberPattern = /^\d*\.?\d{0,5}$/;
       const numericValue = parseFloat(value);
       if (
@@ -61,35 +110,29 @@ const App = () => {
         setErrorPossibility(value);
       }
     },
-    [setErrorPossibility]
+    []
   );
-
-  const handleChanelChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const { value } = e.target;
-
-      const validBinaryPattern = /^[01]*$/;
-
-      if (value.length <= 23 && validBinaryPattern.test(value)) {
-        setChannelMsg(value);
-      }
-    },
-    [setChannelMsg]
-  );
-
-  // golayEncodeDecode("Text decoding and encoding actually works");
 
   return (
     <>
       <Navbar />
       <div className="main-container">
         <div className="data-container">
-          <Dropdown />
-          <InputField
-            placeholder="Input 12 bits (0 and 1)..."
-            value={input}
-            onChange={handleInputChange}
-          />
+          <Dropdown onChange={handleDropdownChange} />
+          {inputType === "binary" ? (
+            <InputField
+              placeholder="Input 12 bits (0 and 1)..."
+              value={input}
+              onChange={handleInputChange}
+            />
+          ) : (
+            <TextArea
+              label="Input text"
+              value={input}
+              onChange={(value) => setInput(value)}
+              maxLength={200}
+            />
+          )}
           <InputField
             placeholder="Error possibility [0, 1]..."
             value={errorPossibility}
@@ -97,19 +140,44 @@ const App = () => {
           />
         </div>
         <div className="results-container">
-          <TextField label="Encoded message" text={encoded || "..."} />
-          <img src={arrow}></img>
-          <InputField
-            label="Message after chanel"
-            value={channelMsg || "..."}
-            onChange={handleChanelChange}
-          />
-          <img src={arrow}></img>
-          <TextField label="Decoded message" text={decoded || "..."} />
+          {inputType === "binary" ? (
+            <TextField label="Encoded message" text={encoded || "..."} />
+          ) : (
+            <TextArea
+              label="Encoded message"
+              value={encoded}
+              onChange={() => {}}
+            />
+          )}
+          <img src={arrow} alt="Arrow" />
+          {inputType === "binary" ? (
+            <InputField
+              label="Message after channel"
+              value={channelMsg || "..."}
+              onChange={handleChannelChange}
+            />
+          ) : (
+            <TextArea
+              label="Message after channel"
+              value={channelMsg}
+              onChange={(value) => setChannelMsg(value)}
+              maxLength={200}
+            />
+          )}
+          <img src={arrow} alt="Arrow" />
+          {inputType === "binary" ? (
+            <TextField label="Decoded message" text={decoded || "..."} />
+          ) : (
+            <TextArea
+              label="Decoded message"
+              value={decoded}
+              onChange={() => {}}
+            />
+          )}
         </div>
         <div className="buttons-container">
           <StyledButton label="Encode" onClick={handleEncodeClick} />
-          <StyledButton label="Send to chanel" onClick={handleSendClick} />
+          <StyledButton label="Send to channel" onClick={handleSendClick} />
           <StyledButton label="Decode" onClick={handleDecodeClick} />
         </div>
       </div>
