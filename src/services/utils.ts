@@ -1,4 +1,2 @@
-import { Bit } from "./types";
-
-export const binarySum = (a: Bit | number, b: Bit | number) => (a+b) % 2;
-export const binaryProd = (a: Bit | number, b: Bit | number) => (a*b) % 2;
+export const binarySum = (a: number, b: number) => (a+b) % 2;
+export const binaryProd = (a: number, b: number) => (a*b) % 2;

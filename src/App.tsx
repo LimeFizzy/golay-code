@@ -16,7 +16,7 @@ import {
   encodeText,
   splitIntoBlocks,
   textToBinary,
-} from "./services/text";
+} from "./services/textFlow";
 
 const App: React.FC = () => {
   const [input, setInput] = useState<string>("");
