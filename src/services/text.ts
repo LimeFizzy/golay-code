@@ -1,6 +1,5 @@
 import { decode } from "./decoding";
 import { encode } from "./encoding";
-import { sendThroughChannel } from "./sendingToChannel";
 
 export const textToBinary = (text: string): { binaryData: number[], originalLength: number } => {
     const binaryData = text.split('').flatMap(char => {
@@ -30,33 +29,3 @@ export const binaryToText = (binaryData: number[]): string =>
     binaryData.reduce((text, _, i, arr) => 
         (i % 8 === 0 ? text + String.fromCharCode(parseInt(arr.slice(i, i + 8).join(''), 2)) : text), 
         '');
-
-export const golayEncodeDecode = (text: string, errorPossibility = 0): string => {
-    console.log("Original text:", text);
-    
-    // Step 1: Convert text to binary
-    const { binaryData, originalLength } = textToBinary(text);
-    console.log("Binary data:", binaryData.join(''));
-    
-    // Step 2: Split into 12-bit blocks
-    const binaryBlocks = splitIntoBlocks(binaryData);
-    console.log("Binary blocks:", binaryBlocks);
-    
-    // Step 3: Encode blocks
-    const encodedBlocks = encodeText(binaryBlocks);
-    console.log("Encoded blocks:", encodedBlocks);
-    
-    // Step 4: Transmit with errors (optional)
-    const transmittedBlocks = encodedBlocks.map(block => sendThroughChannel(block!, errorPossibility));
-    console.log("Transmitted blocks:", transmittedBlocks);
-    
-    // Step 5: Decode blocks
-    const decodedBinary = decodeText(transmittedBlocks, originalLength);
-    console.log("Decoded binary data:", decodedBinary.join(''));
-    
-    // Step 6: Convert binary to text
-    const decodedText = binaryToText(decodedBinary);
-    console.log("Decoded text:", decodedText);
-    
-    return decodedText;
-};
