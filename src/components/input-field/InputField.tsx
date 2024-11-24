@@ -25,7 +25,7 @@ export const InputField = ({
         value={value || ""}
         onChange={onChange}
       />
-      {description && <p className="input-field-description">{description}</p>}
+      <p className="input-field-description">{description}</p>
     </div>
   );
 };
