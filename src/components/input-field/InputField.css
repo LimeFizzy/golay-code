@@ -29,3 +29,12 @@
     margin-bottom: 4px;
     text-align: left;
   }
+
+  .input-field-description {
+    width: 100%;
+    font-size: 14px;
+    color: #ffffff;
+    font-family: 'Jura', sans-serif;
+    margin-top: 0;
+    text-align: left;
+  }

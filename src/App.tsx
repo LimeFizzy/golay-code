@@ -26,6 +26,7 @@ const App: React.FC = () => {
   const [encoded, setEncoded] = useState<string>("");
   const [channelMsg, setChannelMsg] = useState<string>("");
   const [decoded, setDecoded] = useState<string>("");
+  const [errors, setErrors] = useState("");
 
   const [inputLenght, setInputLenght] = useState<number>(0);
   const [encodedText, setEncodedText] = useState<string>("");
@@ -64,6 +65,7 @@ const App: React.FC = () => {
       const msg = encoded.split("").map((c) => Number(c));
       const afterChannel = sendThroughChannel(msg, Number(errorPossibility));
       setChannelMsg(afterChannel?.join("")!);
+      setErrors(calculateErrors(afterChannel?.join("")!));
     } else if (inputType === "text") {
       const transmittedBlocks = encodedTextBlocks!.map((block) =>
         sendThroughChannel(block!, Number(errorPossibility))
@@ -71,7 +73,7 @@ const App: React.FC = () => {
       setTextBlocks(transmittedBlocks);
       setTextAfterChannel(transmittedBlocks.join("\n").replaceAll(",", ""));
     }
-  }, [encoded, errorPossibility, inputType, encodedTextBlocks]);
+  }, [encoded, errorPossibility, inputType, encodedTextBlocks, channelMsg]);
 
   const handleDecodeClick = useCallback(() => {
     if (inputType === "binary") {
@@ -107,6 +109,7 @@ const App: React.FC = () => {
       const validBinaryPattern = /^[01]*$/;
       if (value.length <= 23 && validBinaryPattern.test(value)) {
         setChannelMsg(value);
+        setErrors(calculateErrors(value));
       }
     },
     [inputType]
@@ -125,6 +128,30 @@ const App: React.FC = () => {
       }
     },
     []
+  );
+
+  const calculateErrors = useCallback(
+    (afterChan: string) => {
+      const encodedVector = encoded.toString();
+      const afterChannel = afterChan.toString();
+
+      let errorCount = 0;
+      const errorPositions: number[] = [];
+
+      for (let i = 0; i < encodedVector.length; i++) {
+        if (encodedVector[i] !== afterChannel[i]) {
+          errorCount++;
+          errorPositions.push(i + 1);
+        }
+      }
+
+      return errorCount
+        ? `${errorCount} errors appeared at positions ${errorPositions.join(
+            ", "
+          )}`
+        : "";
+    },
+    [encoded, channelMsg]
   );
 
   return (
@@ -169,6 +196,7 @@ const App: React.FC = () => {
               label="Message after channel"
               value={channelMsg || "..."}
               onChange={handleChannelChange}
+              description={errors}
             />
           ) : (
             <TextArea

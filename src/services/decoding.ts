@@ -74,13 +74,9 @@ export const decode = (encoded: number[]) => {
         }
     }
 
-    console.log("Error vector:", u.join(''));
-
     // Decode if possible
     if (decodable) {
-        const decoded = formatted.slice(0, 23).map((bit, i) => binarySum(bit, u[i]));
-        console.log("Decoded message:", decoded.join(''));
-        return decoded;
+        return formatted.slice(0, 23).map((bit, i) => binarySum(bit, u[i]));
     } else {
         console.error("ERROR: Message undecodable...");
         return [];

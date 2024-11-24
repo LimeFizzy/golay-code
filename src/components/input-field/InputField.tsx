@@ -5,6 +5,7 @@ interface InputProps {
   value: string | number;
   onChange: (e: any) => void;
   label?: string;
+  description?: string;
 }
 
 export const InputField = ({
@@ -12,6 +13,7 @@ export const InputField = ({
   value,
   onChange,
   label,
+  description,
 }: InputProps) => {
   return (
     <div className="input-container">
@@ -23,6 +25,7 @@ export const InputField = ({
         value={value || ""}
         onChange={onChange}
       />
+      {description && <p className="input-field-description">{description}</p>}
     </div>
   );
 };
