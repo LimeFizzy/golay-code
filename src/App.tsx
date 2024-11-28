@@ -78,7 +78,7 @@ const App: React.FC = () => {
   const handleDecodeClick = useCallback(() => {
     if (inputType === "binary") {
       const decodedBinary = decode(channelMsg.split("").map((c) => Number(c)));
-      setDecoded(decodedBinary?.join("")!);
+      setDecoded(decodedBinary?.join("")!.slice(0, 12));
     } else if (inputType === "text") {
       const decodedBinary = decodeText(textBlocks!, inputLenght);
       const decodedText = binaryToText(decodedBinary);
