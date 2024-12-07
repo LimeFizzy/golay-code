@@ -36,12 +36,18 @@ const App: React.FC = () => {
   const [textBlocks, setTextBlocks] = useState<number[][]>();
   const [textDecoded, setTextDecoded] = useState<string>();
 
+  const [binaryText, setBinaryText] = useState<string>();
+  const [binaryTextBlocks, setBinaryTextBlocks] = useState<number[][]>();
+  const [sentBinaryText, setSentBinaryText] = useState<number[][]>();
+  const [decodedBinText, setDecodedBinText] = useState<string>();
+
   const handleDropdownChange = useCallback((value: string) => {
     setInputType(value);
     setInput("");
     setEncoded("");
     setChannelMsg("");
     setDecoded("");
+    setErrors("");
   }, []);
 
   const handleEncodeClick = useCallback(() => {
@@ -51,8 +57,10 @@ const App: React.FC = () => {
       setEncoded(encodedBinary?.join("")!);
     } else if (inputType === "text") {
       const { binaryData, originalLength } = textToBinary(input);
+      setBinaryText(binaryData.join(""));
       setInputLenght(originalLength);
       const binaryBlocks = splitIntoBlocks(binaryData);
+      setBinaryTextBlocks(binaryBlocks);
       const encodedBlocks = encodeText(binaryBlocks);
       setEncodedTextBlocks(encodedBlocks);
       const encodedT = encodedBlocks.join("\n").replaceAll(",", "");
@@ -70,10 +78,21 @@ const App: React.FC = () => {
       const transmittedBlocks = encodedTextBlocks!.map((block) =>
         sendThroughChannel(block!, Number(errorPossibility))
       );
+      const sentBlocks = binaryTextBlocks!.map((block) =>
+        sendThroughChannel(block!, Number(errorPossibility))
+      );
+      setSentBinaryText(sentBlocks);
       setTextBlocks(transmittedBlocks);
       setTextAfterChannel(transmittedBlocks.join("\n").replaceAll(",", ""));
     }
-  }, [encoded, errorPossibility, inputType, encodedTextBlocks, channelMsg]);
+  }, [
+    encoded,
+    errorPossibility,
+    inputType,
+    encodedTextBlocks,
+    channelMsg,
+    binaryTextBlocks,
+  ]);
 
   const handleDecodeClick = useCallback(() => {
     if (inputType === "binary") {
@@ -82,9 +101,13 @@ const App: React.FC = () => {
     } else if (inputType === "text") {
       const decodedBinary = decodeText(textBlocks!, inputLenght);
       const decodedText = binaryToText(decodedBinary);
+
+      const decodedBin = binaryToText(sentBinaryText?.flat()!);
+
+      setDecodedBinText(decodedBin);
       setTextDecoded(decodedText);
     }
-  }, [channelMsg, inputType, textBlocks, inputLenght]);
+  }, [channelMsg, inputType, textBlocks, inputLenght, sentBinaryText]);
 
   const handleInputChange = useCallback(
     (e: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) => {
@@ -180,6 +203,27 @@ const App: React.FC = () => {
             onChange={handleErrorPossibilityChange}
           />
         </div>
+        {inputType === "text" ? (
+          <div className="no-encoding">
+            <TextArea
+              label="Binary message"
+              value={binaryText || "..."}
+              onChange={() => {}}
+            />
+            <img src={arrow} alt="Arrow" />
+            <TextArea
+              label="Message after channel"
+              value={sentBinaryText?.join("\n").replaceAll(",", "") || "..."}
+              onChange={() => {}}
+            />
+            <img src={arrow} alt="Arrow" />
+            <TextArea
+              label="Decoded message"
+              value={decodedBinText || "..."}
+              onChange={() => {}}
+            />
+          </div>
+        ) : null}
         <div className="results-container">
           {inputType === "binary" ? (
             <TextField label="Encoded message" text={encoded || "..."} />

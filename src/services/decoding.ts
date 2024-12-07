@@ -7,7 +7,7 @@ const getWeight = (msg: number[]) => {
 
 const formatInput = (encoded: number[]) => {
     const formatted = [...encoded];
-    formatted[23] = getWeight(formatted) % 2 ? 0 : 1;
+    formatted[23] = getWeight(formatted.slice(0, 23)) % 2 ? 0 : 1;
     return formatted;
 }
 
@@ -36,7 +36,7 @@ export const decode = (encoded: number[]) => {
 
         // Step 3: Check if weight(s + B[i]) <= 2 for any row B[i]
         // if so, u = [s + b_i, e_i]
-        for (let i = 0; i < 12; i++) {
+        for (let i = 0; i < 12 && !found; i++) {
             const tempSyndrome = syndrome.map((bit, j) => binarySum(bit, B[i][j]));
             if (getWeight(tempSyndrome) <= 2) {
                 tempSyndrome.forEach((bit, k) => u[k] = bit);
@@ -61,8 +61,8 @@ export const decode = (encoded: number[]) => {
                 for (let i = 0; i < 12 && !corrected; i++) {
                     const tempSB = sB.map((bit, j) => binarySum(bit, B[i][j]));
                     if (getWeight(tempSB) <= 2) {
+                        tempSB.forEach((bit, k) => { u[k + 12] = bit; });
                         u[i] = 1;
-                        tempSB.forEach((bit, k) => u[k + 12] = bit);
                         corrected = true;
                     }
                 }
@@ -76,7 +76,7 @@ export const decode = (encoded: number[]) => {
 
     // Decode if possible
     if (decodable) {
-        return formatted.slice(0, 23).map((bit, i) => binarySum(bit, u[i]));
+        return formatted.map((bit, i) => binarySum(bit, u[i]));
     } else {
         console.error("ERROR: Message undecodable...");
         return [];

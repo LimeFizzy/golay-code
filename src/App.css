@@ -20,7 +20,7 @@
   padding: 10px;
 }
 
-.results-container {
+.results-container, .no-encoding {
   display: flex;
   flex-direction: row;
   justify-items: center;
