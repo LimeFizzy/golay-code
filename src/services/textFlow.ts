@@ -1,5 +1,6 @@
 import { decode } from "./decoding";
 import { encode } from "./encoding";
+import { binarySum } from "./utils";
 
 export const textToBinary = (text: string): { binaryData: number[], originalLength: number } => {
     const binaryData = text.split('').flatMap(char => {
@@ -19,6 +20,11 @@ export const splitIntoBlocks = (binaryData: number[], blockSize: number = 12): n
 
 export const encodeText = (binaryBlocks: number[][]) => 
     binaryBlocks.map(block => encode(block));
+
+export const sendTextThroughChannel = (encodedMsg: number[], errorPossibility = 0): number[] => 
+    encodedMsg.map((bit, i) => i <= 7 ? 
+        (parseFloat(Math.random().toFixed(5)) < errorPossibility ? binarySum(bit, 1) : bit) : bit
+    );
 
 export const decodeText = (receivedBlocks: number[][], originalLength: number): number[] => {
     const fullBinaryData = receivedBlocks.flatMap(block => decode(block).slice(0, 12));

@@ -14,6 +14,7 @@ import {
   binaryToText,
   decodeText,
   encodeText,
+  sendTextThroughChannel,
   splitIntoBlocks,
   textToBinary,
 } from "./services/textFlow";
@@ -76,10 +77,10 @@ const App: React.FC = () => {
       setErrors(calculateErrors(afterChannel?.join("")!));
     } else if (inputType === "text") {
       const transmittedBlocks = encodedTextBlocks!.map((block) =>
-        sendThroughChannel(block!, Number(errorPossibility))
+        sendTextThroughChannel(block!, Number(errorPossibility))
       );
       const sentBlocks = binaryTextBlocks!.map((block) =>
-        sendThroughChannel(block!, Number(errorPossibility))
+        sendTextThroughChannel(block!, Number(errorPossibility))
       );
       setSentBinaryText(sentBlocks);
       setTextBlocks(transmittedBlocks);
