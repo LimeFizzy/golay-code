@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useRef } from "react";
 import "./App.css";
 import { encode } from "./services/encoding";
 import { Navbar } from "./components/navbar/Navbar";
@@ -18,6 +18,7 @@ import {
   splitIntoBlocks,
   textToBinary,
 } from "./services/textFlow";
+import { processImage } from "./services/imageFlow";
 
 const App: React.FC = () => {
   const [input, setInput] = useState<string>("");
@@ -41,6 +42,9 @@ const App: React.FC = () => {
   const [binaryTextBlocks, setBinaryTextBlocks] = useState<number[][]>();
   const [sentBinaryText, setSentBinaryText] = useState<number[][]>();
   const [decodedBinText, setDecodedBinText] = useState<string>();
+
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const handleDropdownChange = useCallback((value: string) => {
     setInputType(value);
@@ -178,6 +182,16 @@ const App: React.FC = () => {
     [encoded, channelMsg]
   );
 
+  const handleImageUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (file && canvasRef.current) {
+      setImageFile(file);
+      await processImage(file, Number(errorPossibility), canvasRef.current);
+    }
+  };
+
   return (
     <>
       <Navbar />
@@ -267,6 +281,10 @@ const App: React.FC = () => {
           <StyledButton label="Decode" onClick={handleDecodeClick} />
         </div>
       </div>
+      {/* <div>
+        <input type="file" onChange={handleImageUpload} />
+        <canvas ref={canvasRef} width="500" height="500" />
+      </div> */}
     </>
   );
 };
