@@ -22,6 +22,7 @@ export const Dropdown: React.FC<DropdownProps> = ({ onChange }) => {
         </option>
         <option value="binary">Binary</option>
         <option value="text">Text</option>
+        <option value="image">Image</option>
       </select>
     </div>
   );

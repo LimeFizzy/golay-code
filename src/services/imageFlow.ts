@@ -1,7 +1,3 @@
-import { encode } from './encoding';
-import { sendThroughChannel } from './sendingToChannel';
-import { decode } from './decoding';
-
 // Load and extract image data using Canvas
 export const loadImage = async (file: File): Promise<{ width: number; height: number; pixelData: Uint8ClampedArray }> => {
     return new Promise((resolve, reject) => {
@@ -28,7 +24,7 @@ export const imageToBinary = (pixelData: Uint8ClampedArray): number[] =>
     Array.from(pixelData).flatMap(byte => byte.toString(2).padStart(8, '0').split('').map(Number));
 
 // Split binary data into blocks with correct padding
-export const splitIntoBlocks = (binaryData: number[], blockSize: number = 12): number[][] => {
+export const splitImageIntoBlocks = (binaryData: number[], blockSize: number = 12): number[][] => {
     const blocks: number[][] = [];
     let currentIndex = 0;
     
@@ -124,31 +120,3 @@ const renderToCanvas = (pixelBuffer: Uint8Array, width: number, height: number, 
 
     ctx.putImageData(imageData, 0, 0); // Put the ImageData on the canvas
 };
-
-
-
-export const processImage = async (file: File, errorPossibility: number, canvas: HTMLCanvasElement): Promise<void> => {
-    try {
-        const { width, height, pixelData } = await loadImage(file);
-        const binaryData = imageToBinary(pixelData);
-
-        // Ensure the binary data is not empty
-        if (binaryData.length === 0) {
-            throw new Error("No pixel data found in the image.");
-        }
-
-        const blocks = splitIntoBlocks(binaryData);
-
-        // Encode, transmit, and decode the image blocks
-        const encodedBlocks = blocks.map(block => encode(block));
-        const transmittedBlocks = encodedBlocks.map(block => sendThroughChannel(block!, errorPossibility));
-        const decodedData = transmittedBlocks.flatMap(block => decode(block).slice(0, 12));
-
-        // Reconstruct the image and render it on the canvas
-        await binaryToImage(decodedData, width, height, canvas);
-    } catch (error) {
-        console.error("Error processing image:", error);
-        alert("An error occurred while processing the image.");
-    }
-};
-

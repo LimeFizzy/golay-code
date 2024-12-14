@@ -18,7 +18,12 @@ import {
   splitIntoBlocks,
   textToBinary,
 } from "./services/textFlow";
-import { processImage } from "./services/imageFlow";
+import {
+  binaryToImage,
+  imageToBinary,
+  loadImage,
+  splitImageIntoBlocks,
+} from "./services/imageFlow";
 
 const App: React.FC = () => {
   const [input, setInput] = useState<string>("");
@@ -43,8 +48,17 @@ const App: React.FC = () => {
   const [sentBinaryText, setSentBinaryText] = useState<number[][]>();
   const [decodedBinText, setDecodedBinText] = useState<string>();
 
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const binaryCanvasRef = useRef<HTMLCanvasElement>(null);
+  const encodedCanvasRef = useRef<HTMLCanvasElement>(null);
+  const [imageData, setImageData] = useState<{
+    width: number;
+    height: number;
+    pixelData: Uint8ClampedArray;
+  }>();
+  const [imageBinaryData, setImageBinaryData] = useState<number[][]>([]);
+  const [encodedImageBlocks, setEncodedImageBlocks] = useState<number[][]>([]);
+  const [sentBinary, setSentBinary] = useState<number[][]>();
+  const [sentEncoded, setSentEncoded] = useState<number[][]>();
 
   const handleDropdownChange = useCallback((value: string) => {
     setInputType(value);
@@ -53,6 +67,11 @@ const App: React.FC = () => {
     setChannelMsg("");
     setDecoded("");
     setErrors("");
+    setImageBinaryData([]);
+    setEncodedImageBlocks([]);
+    setSentBinary([]);
+    setSentEncoded([]);
+    setImageData(undefined);
   }, []);
 
   const handleEncodeClick = useCallback(() => {
@@ -70,8 +89,16 @@ const App: React.FC = () => {
       setEncodedTextBlocks(encodedBlocks);
       const encodedT = encodedBlocks.join("\n").replaceAll(",", "");
       setEncodedText(encodedT);
+    } else {
+      const binaryData = imageToBinary(imageData?.pixelData!);
+      const blocks = splitImageIntoBlocks(binaryData);
+
+      setImageBinaryData(blocks);
+
+      const encodedBlocks = blocks.map((block) => encode(block));
+      setEncodedImageBlocks(encodedBlocks as number[][]);
     }
-  }, [input, inputType, errorPossibility]);
+  }, [input, inputType, errorPossibility, imageData]);
 
   const handleSendClick = useCallback(() => {
     if (inputType === "binary") {
@@ -89,6 +116,18 @@ const App: React.FC = () => {
       setSentBinaryText(sentBlocks);
       setTextBlocks(transmittedBlocks);
       setTextAfterChannel(transmittedBlocks.join("\n").replaceAll(",", ""));
+    } else {
+      const transmittedBinaryBlocks = imageBinaryData.map((block) =>
+        sendThroughChannel(
+          block.concat(new Array(23 - block.length).fill(0)),
+          Number(errorPossibility)
+        )
+      );
+      const transmittedEncodedBlocks = encodedImageBlocks.map((block) =>
+        sendThroughChannel(block!, Number(errorPossibility))
+      );
+      setSentBinary(transmittedBinaryBlocks);
+      setSentEncoded(transmittedEncodedBlocks);
     }
   }, [
     encoded,
@@ -96,10 +135,11 @@ const App: React.FC = () => {
     inputType,
     encodedTextBlocks,
     channelMsg,
+    imageBinaryData,
     binaryTextBlocks,
   ]);
 
-  const handleDecodeClick = useCallback(() => {
+  const handleDecodeClick = useCallback(async () => {
     if (inputType === "binary") {
       const decodedBinary = decode(channelMsg.split("").map((c) => Number(c)));
       setDecoded(decodedBinary?.join("")!.slice(0, 12));
@@ -111,8 +151,39 @@ const App: React.FC = () => {
 
       setDecodedBinText(decodedBin);
       setTextDecoded(decodedText);
+    } else {
+      const decodedBinary = sentBinary?.flatMap((block) =>
+        decode(block).slice(0, 12)
+      );
+      const decodedEncoded = sentEncoded?.flatMap((block) =>
+        decode(block).slice(0, 12)
+      );
+
+      await binaryToImage(
+        decodedBinary!,
+        imageData?.width!,
+        imageData?.height!,
+        binaryCanvasRef.current!
+      );
+
+      await binaryToImage(
+        decodedEncoded!,
+        imageData?.width!,
+        imageData?.height!,
+        encodedCanvasRef.current!
+      );
     }
-  }, [channelMsg, inputType, textBlocks, inputLenght, sentBinaryText]);
+  }, [
+    channelMsg,
+    inputType,
+    textBlocks,
+    inputLenght,
+    sentBinaryText,
+    sentBinary,
+    sentEncoded,
+    binaryCanvasRef,
+    encodedCanvasRef,
+  ]);
 
   const handleInputChange = useCallback(
     (e: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) => {
@@ -134,10 +205,11 @@ const App: React.FC = () => {
     (e: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) => {
       const { value } = e.target;
 
+      setErrors(calculateErrors(value));
+
       const validBinaryPattern = /^[01]*$/;
       if (value.length <= 23 && validBinaryPattern.test(value)) {
         setChannelMsg(value);
-        setErrors(calculateErrors(value));
       }
     },
     [inputType]
@@ -186,10 +258,9 @@ const App: React.FC = () => {
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const file = event.target.files?.[0];
-    if (file && canvasRef.current) {
-      setImageFile(file);
-      await processImage(file, Number(errorPossibility), canvasRef.current);
-    }
+
+    const { width, height, pixelData } = await loadImage(file!);
+    setImageData({ width, height, pixelData });
   };
 
   return (
@@ -204,13 +275,15 @@ const App: React.FC = () => {
               value={input}
               onChange={handleInputChange}
             />
-          ) : (
+          ) : inputType === "text" ? (
             <TextArea
               label="Input text"
               value={input}
               onChange={(value) => setInput(value)}
               maxLength={50}
             />
+          ) : (
+            <input type="file" onChange={handleImageUpload} />
           )}
           <InputField
             placeholder="Error possibility [0, 1]..."
@@ -238,14 +311,41 @@ const App: React.FC = () => {
               onChange={() => {}}
             />
           </div>
+        ) : inputType === "image" ? (
+          <div className="no-encoding">
+            <TextArea
+              label="Image in binary"
+              value={imageBinaryData.flat().join("") || "..."}
+              onChange={() => {}}
+            />
+            <img src={arrow} alt="Arrow" />
+            <TextArea
+              label="Image after channel"
+              value={sentBinary?.flat().join("") || "..."}
+              onChange={() => {}}
+            />
+            <img src={arrow} alt="Arrow" />
+            <canvas
+              className="canvas"
+              ref={binaryCanvasRef}
+              width="150"
+              height="150"
+            />
+          </div>
         ) : null}
         <div className="results-container">
           {inputType === "binary" ? (
             <TextField label="Encoded message" text={encoded || "..."} />
-          ) : (
+          ) : inputType === "text" ? (
             <TextArea
               label="Encoded message"
               value={encodedText || "..."}
+              onChange={() => {}}
+            />
+          ) : (
+            <TextArea
+              label="Encoded image"
+              value={encodedImageBlocks.flat().join("") || "..."}
               onChange={() => {}}
             />
           )}
@@ -257,21 +357,34 @@ const App: React.FC = () => {
               onChange={handleChannelChange}
               description={errors}
             />
-          ) : (
+          ) : inputType === "text" ? (
             <TextArea
               label="Message after channel"
               value={textAfterChannel || "..."}
+              onChange={() => {}}
+            />
+          ) : (
+            <TextArea
+              label="Image after channel"
+              value={sentEncoded?.flat().join("") || "..."}
               onChange={() => {}}
             />
           )}
           <img src={arrow} alt="Arrow" />
           {inputType === "binary" ? (
             <TextField label="Decoded message" text={decoded || "..."} />
-          ) : (
+          ) : inputType === "text" ? (
             <TextArea
               label="Decoded message"
               value={textDecoded || "..."}
               onChange={() => {}}
+            />
+          ) : (
+            <canvas
+              className="canvas"
+              ref={encodedCanvasRef}
+              width="150"
+              height="150"
             />
           )}
         </div>
@@ -281,10 +394,6 @@ const App: React.FC = () => {
           <StyledButton label="Decode" onClick={handleDecodeClick} />
         </div>
       </div>
-      {/* <div>
-        <input type="file" onChange={handleImageUpload} />
-        <canvas ref={canvasRef} width="500" height="500" />
-      </div> */}
     </>
   );
 };
